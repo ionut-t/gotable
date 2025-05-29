@@ -573,3 +573,22 @@ func (m Model) GetCoordinates() (int, int) {
 func (m Model) GetSelectionMode() SelectionMode {
 	return m.selectionMode
 }
+
+// ResetSelection resets the selection to the first cell
+func (m *Model) ResetSelection() {
+	m.selectedRow = 0
+	m.selectedCol = 0
+	m.offsetX = 0
+	m.offsetY = 0
+}
+
+// SetSelectedCell sets the selected cell by coordinates
+func (m *Model) SetSelectedCell(row, col int) {
+	if row < 0 || row >= len(m.rows) || col < 0 || col >= len(m.headers) {
+		return
+	}
+
+	m.selectedRow = row
+	m.selectedCol = col
+	m.ensureVisible()
+}
