@@ -170,19 +170,27 @@ func (m *Model) ShowBorders(show bool) {
 // SetHeaders sets the table headers
 func (m *Model) SetHeaders(headers []string) {
 	m.headers = headers
-	m.calculateColumnWidths()
+	if m.width > 0 {
+		m.calculateColumnWidths()
+	}
 }
 
 // SetRows sets the table rows
 func (m *Model) SetRows(rows [][]string) {
 	m.rows = rows
-	m.calculateColumnWidths()
+	if m.width > 0 {
+		m.calculateColumnWidths()
+	}
 }
 
 // SetSize sets the viewport size
 func (m *Model) SetSize(width, height int) {
 	m.width = width
 	m.height = height
+
+	if len(m.headers) > 0 || len(m.rows) > 0 {
+		m.calculateColumnWidths()
+	}
 }
 
 // SetSelectionMode sets how selection works
@@ -236,16 +244,20 @@ func (m *Model) calculateColumnWidths() {
 		numCols = len(m.rows[0])
 	}
 
+	if numCols == 0 {
+		return
+	}
+
 	m.columnWidths = make([]int, numCols)
 
 	// Check header widths
 	for i, header := range m.headers {
-		if len(header) > m.columnWidths[i] {
+		if i < numCols && len(header) > m.columnWidths[i] {
 			m.columnWidths[i] = len(header)
 		}
 	}
 
-	// Check row widths
+	// Check row widths and find the widest cell in each column
 	for _, row := range m.rows {
 		for i, cell := range row {
 			if i < numCols && len(cell) > m.columnWidths[i] {
@@ -257,6 +269,49 @@ func (m *Model) calculateColumnWidths() {
 	// Add padding
 	for i := range m.columnWidths {
 		m.columnWidths[i] += 2
+	}
+
+	// Don't expand if width is not set
+	if m.width <= 0 {
+		return
+	}
+
+	// Calculate total content width
+	totalContentWidth := 0
+	for _, w := range m.columnWidths {
+		totalContentWidth += w
+	}
+
+	// Add space for borders if enabled
+	if m.showBorders && numCols > 1 {
+		totalContentWidth += (numCols - 1)
+	}
+
+	// If table width is set and content is narrower, expand columns proportionally
+	if totalContentWidth < m.width {
+		availableExtra := m.width - totalContentWidth
+
+		// Calculate total weight (sum of current widths)
+		totalWeight := 0
+		for _, w := range m.columnWidths {
+			totalWeight += w
+		}
+
+		if totalWeight > 0 {
+			// Distribute extra space proportionally to current widths
+			distributed := 0
+			for i := range m.columnWidths {
+				if i < len(m.columnWidths)-1 {
+					// Calculate proportional extra space for this column
+					extra := (m.columnWidths[i] * availableExtra) / totalWeight
+					m.columnWidths[i] += extra
+					distributed += extra
+				} else {
+					// Last column gets the remaining space to avoid rounding errors
+					m.columnWidths[i] += (availableExtra - distributed)
+				}
+			}
+		}
 	}
 }
 
