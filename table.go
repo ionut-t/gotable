@@ -84,11 +84,11 @@ func DefaultKeyMap() KeyMap {
 			key.WithHelp("end", "go to end"),
 		),
 		PageUp: key.NewBinding(
-			key.WithKeys("pageup", "ctrl+u"),
+			key.WithKeys("pgup", "ctrl+u"),
 			key.WithHelp("PgUp/ctrl+u", "scroll up"),
 		),
 		PageDown: key.NewBinding(
-			key.WithKeys("pagedown", "ctrl+d"),
+			key.WithKeys("pgdown", "ctrl+d"),
 			key.WithHelp("PgDn/ctrl+d", "scroll down"),
 		),
 	}
@@ -330,11 +330,9 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			m.moveSelection(0, 1)
 		case key.Matches(msg, m.keyMap.Home):
 			m.selectedRow = 0
-			m.selectedCol = 0
 			m.ensureVisible()
 		case key.Matches(msg, m.keyMap.End):
 			m.selectedRow = len(m.rows) - 1
-			m.selectedCol = len(m.headers) - 1
 			m.ensureVisible()
 		case key.Matches(msg, m.keyMap.PageUp):
 			m.moveSelection(-10, 0)
